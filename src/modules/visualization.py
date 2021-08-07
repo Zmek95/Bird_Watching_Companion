@@ -53,7 +53,7 @@ def model_metrics(model_history, figsize=(8, 8), ylim_loss=1):
 
     return None
 
-def plot_image_prediction(predictions_array, true_label, img, class_names):
+def plot_image_prediction(predictions_array, img, class_names, *true_label):
     
     plt.grid(False)
     plt.xticks([])
@@ -62,17 +62,23 @@ def plot_image_prediction(predictions_array, true_label, img, class_names):
     plt.imshow(img)
 
     predicted_label = np.argmax(predictions_array)
-    if predicted_label == true_label:
-        color = 'blue'
+
+    if true_label:
+        if predicted_label == true_label:
+            color = 'blue'
+        else:
+            color = 'red'
+
+        plt.xlabel("{} {:2.0f}% ({})".format(class_names[predicted_label],
+                                    100*np.max(predictions_array),
+                                    class_names[true_label]),
+                                    color=color)
     else:
-        color = 'red'
+        plt.xlabel("{} {:2.0f}%".format(class_names[predicted_label],
+                                    100*np.max(predictions_array)),
+                                    color='blue')
 
-    plt.xlabel("{} {:2.0f}% ({})".format(class_names[predicted_label],
-                                100*np.max(predictions_array),
-                                class_names[true_label]),
-                                color=color)
-
-def plot_value_array(predictions_array, true_label, class_names):
+def plot_value_array(predictions_array, class_names, *true_label):
     
     plt.grid(False)
     plt.xticks(rotation='vertical')
@@ -81,30 +87,37 @@ def plot_value_array(predictions_array, true_label, class_names):
     
     max_idxs = np.argpartition(predictions_array, -5)[-5:]  # Get 5 largest elements
     max_idxs = max_idxs[np.argsort(predictions_array[max_idxs])][::-1] # Sort the indexes by element 
-        
-    if true_label in max_idxs: 
-        true_idx = np.where(max_idxs == true_label)[0][0]
-        
-    else:# if true label not in top 5, replace lowest element with true label
-        max_idxs[-1] = true_label
-        true_idx = -1
+
+    if true_label:    
+        if true_label in max_idxs: 
+            true_idx = np.where(max_idxs == true_label)[0][0]
+            
+        else:# if true label not in top 5, replace lowest element with true label
+            max_idxs[-1] = true_label
+            true_idx = -1
     
     thisplot = plt.bar([class_names[i] for i in max_idxs], predictions_array[max_idxs], color="#777777")
     plt.ylim([0, 1])
     
+    if true_label:
+        thisplot[0].set_color('red') # predicted label
+        thisplot[true_idx].set_color('blue')
 
-    thisplot[0].set_color('red') # predicted label
-    thisplot[true_idx].set_color('blue')
-
-def image_metrics(rows, columns, predictions, labels, images, class_names):
+def image_metrics(rows, columns, predictions, images, class_names, *labels):
     
     num_images = rows * columns
     
     plt.figure(figsize=(2 * 2 * columns, 2 * rows))
     for i in range(num_images):
         plt.subplot(rows, 2 * columns, 2 * i + 1)
-        plot_image_prediction(predictions[i], labels[i], images[i].astype('uint8'), class_names)
+        if labels:
+            plot_image_prediction(predictions[i], images[i].astype('uint8'), class_names, labels[i])
+        else:
+            plot_image_prediction(predictions[i], images[i].astype('uint8'), class_names)
         plt.subplot(rows, 2* columns, 2 * i + 2)
-        plot_value_array(predictions[i], labels[i], class_names)
+        if labels:
+            plot_value_array(predictions[i], class_names, labels[i])
+        else:
+            plot_value_array(predictions[i], class_names)
     plt.tight_layout()
     plt.show()
