@@ -337,5 +337,27 @@ def draw_boxes(filename, v_boxes, v_labels, v_scores):
 		# draw text and score in top left corner
 		label = "%s (%.3f)" % (v_labels[i], v_scores[i])
 		pyplot.text(x1, y1, label, color='white')
-	# show the plot
-	pyplot.show()
+	return ax
+
+def yolo_prediction(model, labels, image_filename):
+
+	input_w, input_h = 416, 416
+	image, image_w, image_h = load_image_pixels(image_filename, (input_w, input_h))
+	# make prediction
+	yhat = model.predict(image)
+
+	# define the anchors
+	anchors = [[116,90, 156,198, 373,326], [30,61, 62,45, 59,119], [10,13, 16,30, 33,23]]
+	# define the probability threshold for detected objects
+	class_threshold = 0.6
+	boxes = list()
+	for i in range(len(yhat)):
+		# decode the output of the network
+		boxes += decode_netout(yhat[i][0], anchors[i], class_threshold, input_h, input_w)
+	# correct the sizes of the bounding boxes for the shape of the image
+	correct_yolo_boxes(boxes, image_h, image_w, input_h, input_w)
+	# suppress non-maximal boxes
+	do_nms(boxes, 0.5)
+	v_boxes, v_labels, v_scores = get_boxes(boxes, labels, class_threshold)
+
+	return v_boxes, v_labels, v_scores

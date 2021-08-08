@@ -107,7 +107,7 @@ def image_metrics(rows, columns, predictions, images, class_names, *labels):
     
     num_images = rows * columns
     
-    plt.figure(figsize=(2 * 2 * columns, 2 * rows))
+    ax = plt.figure(figsize=(2 * 2 * columns, 2 * rows))
     for i in range(num_images):
         plt.subplot(rows, 2 * columns, 2 * i + 1)
         if labels:
@@ -119,5 +119,6 @@ def image_metrics(rows, columns, predictions, images, class_names, *labels):
             plot_value_array(predictions[i], class_names, labels[i])
         else:
             plot_value_array(predictions[i], class_names)
-    plt.tight_layout()
-    plt.show()
+    #plt.tight_layout()
+    #plt.show()
+    return ax

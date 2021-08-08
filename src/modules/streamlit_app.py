@@ -3,27 +3,43 @@ import streamlit as st
 import cv2
 from PIL import Image
 import numpy as np
+from yolo3_instantiate import yolo_prediction, draw_boxes
+from src.modules.visualization import image_metrics
+import csv
 
 
-def predict_image(image_data, model, size=(224, 224)):
+def predict_images(cropped_images, model, size=(224, 224)):
         
+        print_images = []
+        resized_images = []
+
+        for image in cropped_images:
+            np_img = np.asarray(image)
+            image_resized = tf.image.resize(np_img, size, method='lanczos3', antialias=True)
+            
+            print_images.append(image_resized.numpy())
+            
+            image_resized = np.expand_dims(image_resized, 0)
+            resized_images.append(image_resized)
         
-        image = np.asarray(image_data)
-        # Convert image to RGB format
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        # Resize image while preserving aspect ratio
-        image_resized = tf.image.resize_with_pad(image, size[0], size[1], method='lanczos3', antialias=True)
+        predictions = model.predict(np.vstack(resized_images))
         
-        prediction = model.predict(image_resized)
-        
-        return prediction
+        return predictions, print_images
 
 
 if __name__=='__main__':
 
-    model = tf.keras.models.load_model('~/Bootcamp/Projects/Final_Project/output/MN_model_96.h5')
-    
-    class_names = ['Robin','etc.'] # load from a file or write down here
+    mobilenet_model = tf.keras.models.load_model('~/Bootcamp/Projects/Final_Project/output/MN_model_96.h5')
+    yolo_model = tf.keras.models.load_model('~/Bootcamp/Projects/Final_Project/output/yolo_model.h5')
+
+    # Load labels for models
+    with open('yolo_labels.csv', newline='') as f:
+        reader = csv.reader(f)
+        yolo_labels = [x[0] for x in reader]
+
+    with open('bird_classes.csv', newline='') as f:
+        reader = csv.reader(f)
+        class_names = [x[0] for x in reader]
 
     st.write("""
             # Bird Species Classifier
@@ -36,14 +52,31 @@ if __name__=='__main__':
     if file is None:
         st.text("Please upload an image file")
     else:
-        image = Image.open(file)
-        st.image(image, use_column_width=True)
-        prediction = predict_image(image, model, size=(224,224))
         
-        predicted_class = np.argmax(prediction)
-        predicted_class = class_names[predicted_class]
+        v_boxes, v_labels, v_scores = yolo_prediction(yolo_model, yolo_labels, file)
+        draw_boxes(file, v_boxes, v_labels, v_scores)
+        st.pyplot()
+        #st.image(image, use_column_width=True)
 
-        st.write(f"It's a {predicted_class}!")
+        cropped_images = []
+        for box in v_boxes:
+            y1, x1, y2, x2 = box.ymin, box.xmin, box.ymax, box.xmax
+
+            image = Image.open('file')
+            image = image.convert('RGB')
+
+            cropped_image = image.crop((x1,y1,x2,y2))
+            cropped_images.append(cropped_image)
+
+
+
+
+        predictions, print_images = predict_images(cropped_images, mobilenet_model, size=(224,224))
+        
+        image_metrics(2, 1, predictions, print_images, class_names)
+        st.pyplot()
+
+        #st.write(f"It's a {predicted_class}!")
         
         # Implement function that will show the top 5 predicted classes.
 
