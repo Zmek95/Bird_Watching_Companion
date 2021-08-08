@@ -19,6 +19,7 @@ from tensorflow.keras.preprocessing.image import load_img
 from tensorflow.keras.preprocessing.image import img_to_array
 from matplotlib import pyplot
 from matplotlib.patches import Rectangle
+from PIL import Image
 
 def _conv_block(inp, convs, skip=True):
 	x = inp
@@ -167,11 +168,12 @@ class WeightReader:
 # load and prepare an image
 def load_image_pixels(filename, shape):
     # load the image to get its shape
-    image = load_img(filename)
+    image = Image.open(filename)
     width, height = image.size
     # load the image with the required size
-    image = load_img(filename, target_size=shape)
+    image = image.resize(shape, resample=Image.NEAREST)
     # convert to numpy array
+    image = image.convert('RGB')
     image = img_to_array(image)
     # scale pixel values to [0, 1]
     image = image.astype('float32')
@@ -284,21 +286,6 @@ def do_nms(boxes, nms_thresh):
 				if bbox_iou(boxes[index_i], boxes[index_j]) >= nms_thresh:
 					boxes[index_j].classes[c] = 0
 
-# load and prepare an image
-def load_image_pixels(filename, shape):
-	# load the image to get its shape
-	image = load_img(filename)
-	width, height = image.size
-	# load the image with the required size
-	image = load_img(filename, target_size=shape)
-	# convert to numpy array
-	image = img_to_array(image)
-	# scale pixel values to [0, 1]
-	image = image.astype('float32')
-	image /= 255.0
-	# add a dimension so that we have one sample
-	image = expand_dims(image, 0)
-	return image, width, height
 
 # get all of the results above a threshold
 def get_boxes(boxes, labels, thresh):
