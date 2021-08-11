@@ -14,6 +14,10 @@ def mobilenet_v2(img_dim=(224,224,3), num_classes=275, dropout=0.4, lr=0.01, met
     # scale pixel values to [-1,1]
     preprocess_input = tf.keras.applications.mobilenet_v2.preprocess_input
 
+    #data_augmentation = tf.keras.Sequential([
+    #tf.keras.preprocessing.image.RandomBrightness(brightness_range=(0.5, 1.0)),
+    #tf.keras.preprocessing.image.RandomRotation(rg=15)])
+
     base_model = tf.keras.applications.MobileNetV2(input_shape=img_dim, include_top=False, weights='imagenet')
     base_model.trainable = False
 

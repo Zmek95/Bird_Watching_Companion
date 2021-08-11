@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 from src.modules.yolo3_instantiate import yolo_prediction, draw_boxes
 from src.modules.visualization import image_metrics
+from src.modules.preprocessing import image_cropper
 import csv
 
 def predict_images(cropped_images, model, size=(224, 224)):
@@ -29,54 +30,45 @@ if __name__=='__main__':
 
     st.set_option('deprecation.showPyplotGlobalUse', False)
 
-    mobilenet_model = tf.keras.models.load_model('output/MN_model_96.h5')
-    yolo_model = tf.keras.models.load_model('output/yolo_model.h5')
+    if 'mobilenet_model' not in st.session_state:
+        st.session_state.mobilenet_model = tf.keras.models.load_model('output/MN_model_96.h5')
+    
+    if 'yolo_model' not in st.session_state:
+        st.session_state.yolo_model = tf.keras.models.load_model('output/yolo_model.h5')
 
     # Load labels for models
-    with open('output/yolo_labels.csv', newline='') as f:
-        reader = csv.reader(f)
-        yolo_labels = [x[0] for x in reader]
+    if 'yolo_labels' not in st.session_state:
+        with open('output/yolo_labels.csv', newline='') as f:
+            reader = csv.reader(f)
+            st.session_state.yolo_labels = [x[0] for x in reader]
 
-    with open('output/bird_classes.csv', newline='') as f:
-        reader = csv.reader(f)
-        class_names = [x[0] for x in reader]
+    if 'class_names' not in st.session_state:
+        with open('output/bird_classes.csv', newline='') as f:
+            reader = csv.reader(f)
+            st.session_state.class_names = [x[0] for x in reader]
 
     st.write("""
             # Bird Species Classifier
             """
             )
 
-    st.write("Web app that classifies the spicies of bird!")
+    st.write("Web app that classifies species of birds in a picture!")
     file = st.file_uploader("Please upload an image file", type=["jpg", "png"])
 
     if file is None:
         st.text("Please upload an image file")
     else:
 
-        v_boxes, v_labels, v_scores = yolo_prediction(yolo_model, yolo_labels, file)
+        v_boxes, v_labels, v_scores = yolo_prediction(st.session_state.yolo_model, st.session_state.yolo_labels, file)
         draw_boxes(file, v_boxes, v_labels, v_scores)
         st.pyplot()
-        #st.image(image, use_column_width=True)
 
-        cropped_images = []
-        for box in v_boxes:
-            y1, x1, y2, x2 = box.ymin, box.xmin, box.ymax, box.xmax
+        cropped_images = image_cropper(file, v_boxes)
 
-            image = Image.open(file)
-            image = image.convert('RGB')
-
-            cropped_image = image.crop((x1,y1,x2,y2))
-            cropped_images.append(cropped_image)
-
-
-
-
-        predictions, print_images = predict_images(cropped_images, mobilenet_model, size=(224,224))
+        predictions, print_images = predict_images(cropped_images, st.session_state.mobilenet_model, size=(224,224))
         
-        image_metrics(len(cropped_images), 1, predictions, print_images, class_names)
+        image_metrics(len(cropped_images), 1, predictions, print_images, st.session_state.class_names)
         st.pyplot()
-
-        #st.write(f"It's a {predicted_class}!")
         
-        # Implement function that will show the top 5 predicted classes.
+       
 
