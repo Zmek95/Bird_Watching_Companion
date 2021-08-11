@@ -73,7 +73,7 @@ if __name__=='__main__':
 
         predictions, print_images = predict_images(cropped_images, mobilenet_model, size=(224,224))
         
-        image_metrics(2, 1, predictions, print_images, class_names)
+        image_metrics(len(cropped_images), 1, predictions, print_images, class_names)
         st.pyplot()
 
         #st.write(f"It's a {predicted_class}!")

@@ -295,7 +295,7 @@ def get_boxes(boxes, labels, thresh):
 		# enumerate all possible labels
 		for i in range(len(labels)):
 			# check if the threshold for this label is high enough
-			if box.classes[i] > thresh:
+			if box.classes[i] > thresh and labels[i] == 'bird':
 				v_boxes.append(box)
 				v_labels.append(labels[i])
 				v_scores.append(box.classes[i]*100)
@@ -336,7 +336,7 @@ def yolo_prediction(model, labels, image_filename):
 	# define the anchors
 	anchors = [[116,90, 156,198, 373,326], [30,61, 62,45, 59,119], [10,13, 16,30, 33,23]]
 	# define the probability threshold for detected objects
-	class_threshold = 0.6
+	class_threshold = 0.5
 	boxes = list()
 	for i in range(len(yhat)):
 		# decode the output of the network
