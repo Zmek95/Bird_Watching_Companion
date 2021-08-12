@@ -91,7 +91,7 @@ def plot_value_array(predictions_array, class_names, *true_label):
             max_idxs[-1] = true_label
             true_idx = -1
     
-    thisplot = plt.barh([class_names[i] for i in max_idxs], predictions_array[max_idxs], color="#777777")
+    thisplot = plt.barh([class_names[i] for i in max_idxs], predictions_array[max_idxs], color="#FFCC00")
     plt.xlim([0, 1])
     plt.xlabel('Probability')
     

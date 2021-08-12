@@ -56,6 +56,5 @@ def image_cropper(photo_filename, v_boxes):
 
         cropped_image = image.crop((x1,y1,x2,y2))
         cropped_images.append(cropped_image)
-        cropped_image.show()
     
     return cropped_images
